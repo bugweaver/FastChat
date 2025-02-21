@@ -19,7 +19,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
-app.include_router(api_router, prefix=settings.api.prefix)
+app.include_router(api_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=settings.run.host, port=settings.run.port, reload=True)
