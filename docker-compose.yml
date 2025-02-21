@@ -1,27 +1,31 @@
 services:
+  back:
+    build:
+      dockerfile: src/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - pg
+    command: ["python", "main.py"]
+
   pg:
     image: postgres
-    environment:
-      POSTGRES_DB: fastchat_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      PGDATA: /var/lib/postgresql/data
+    env_file:
+      - src/.env
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
+      test: [ "CMD", "pg_isready", "-U", "POSTGRES_USER", "-p", "POSTGRES_PORT", "-d", "POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 3
 
   pgadmin:
     image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.org
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    env_file:
+      - src/.env
     ports:
       - "5050:80"
 
