@@ -7,6 +7,7 @@ services:
     depends_on:
       - pg
     command: ["python", "main.py"]
+    profiles: ["app"]
 
   pg:
     image: postgres
@@ -21,6 +22,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+    profiles: ["db"]
 
   pgadmin:
     image: dpage/pgadmin4
@@ -28,6 +30,7 @@ services:
       - src/.env
     ports:
       - "5050:80"
+    profiles: ["db"]
 
 
 volumes:
