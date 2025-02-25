@@ -124,7 +124,6 @@ celerybeat.pid
 
 # Environments
 src/.env
-src/.env.postgres
 .venv
 env/
 venv/
