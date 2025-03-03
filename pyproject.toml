@@ -15,6 +15,7 @@ bcrypt = "^4.2.1"
 orjson = "^3.10.15"
 redis = "^5.2.1"
 setuptools = "^75.8.2"
+ruff = "^0.9.9"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
