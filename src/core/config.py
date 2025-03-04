@@ -47,6 +47,17 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s",
     }
 
+
+class RedisConfig(BaseModel):
+    url: RedisDsn = RedisDsn.build(
+        scheme="redis",
+        host=os.getenv("REDIS_HOST"),
+        port=int(os.getenv("REDIS_PORT")),
+        path=os.getenv("REDIS_DB"),
+        password=os.getenv("REDIS_PASSWORD"),
+    )
+
+
 class AuthJWT(BaseModel):
     private_key_path: Path = BASE_DIR / "certs" / "jwt-private.pem"
     public_key_path: Path = BASE_DIR / "certs" / "jwt-public.pem"
@@ -59,6 +70,7 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseConfig = DatabaseConfig()
+    redis: RedisConfig = RedisConfig()
     auth_jwt: AuthJWT = AuthJWT()
 
 
