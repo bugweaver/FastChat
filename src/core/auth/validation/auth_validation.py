@@ -5,7 +5,7 @@ from jwt import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from core.auth.exeptions import CredentialsException, MissingUsernameError
+from core.auth.exceptions import CredentialsException, MissingUsernameError
 from core.auth.services.token_service import (
     ACCESS_TOKEN_TYPE,
     REFRESH_TOKEN_TYPE,
