@@ -31,7 +31,7 @@ class DatabaseConfig(BaseModel):
         password=os.getenv("POSTGRES_PASSWORD"),
         host=os.getenv("POSTGRES_HOST"),
         port=int(os.getenv("POSTGRES_PORT")),
-        path=f"/{os.getenv('POSTGRES_DB')}",
+        path=os.getenv("POSTGRES_DB"),
     )
     echo: bool = False
     echo_pool: bool = False
