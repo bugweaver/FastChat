@@ -1,11 +1,9 @@
 import os
 from pathlib import Path
 
-from pydantic import BaseModel
-from pydantic import PostgresDsn
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from dotenv import load_dotenv
+from pydantic import BaseModel, PostgresDsn, RedisDsn
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
