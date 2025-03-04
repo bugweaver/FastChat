@@ -8,8 +8,6 @@ from fastapi.responses import ORJSONResponse
 from api import router as api_router
 from core.auth.services.redis_service import setup_redis_client
 from core.config import settings
-
-from api import router as api_router
 from core.models import db_helper
 
 
