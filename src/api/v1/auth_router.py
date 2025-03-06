@@ -30,8 +30,8 @@ router = APIRouter(prefix="", tags=["JWT"])
 
 @router.post("/register", response_model=UserSchema)
 async def register(
-        data: UserRegister,
-        db: AsyncSession = Depends(db_helper.session_getter),
+    data: UserRegister,
+    db: AsyncSession = Depends(db_helper.session_getter),
 ) -> UserSchema:
     """
     description: |
@@ -73,10 +73,10 @@ async def register(
 
 @router.post("/login", response_model=TokenInfo)
 async def login(
-        response: Response,
-        form_data: Annotated[CustomOAuth2PasswordRequestForm, Depends()],
-        redis: Redis = Depends(get_redis),
-        db: AsyncSession = Depends(db_helper.session_getter),
+    response: Response,
+    form_data: Annotated[CustomOAuth2PasswordRequestForm, Depends()],
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(db_helper.session_getter),
 ) -> TokenInfo:
     """
     description: |
@@ -135,8 +135,8 @@ async def login(
 
 @router.post("/refresh")
 async def refresh(
-        current_user: UserSchema = Depends(get_current_user_from_refresh_token),
-        redis: Redis = Depends(get_redis),
+    current_user: UserSchema = Depends(get_current_user_from_refresh_token),
+    redis: Redis = Depends(get_redis),
 ) -> JSONResponse:
     """
     description: |
@@ -189,7 +189,7 @@ async def refresh(
 
 @router.get("/users/me", dependencies=[Depends(oauth2_scheme)])
 async def auth_user_check_self_info(
-        user: User = Depends(get_current_active_auth_user),
+    user: User = Depends(get_current_active_auth_user),
 ) -> UserSchema:
     """
     description: |
@@ -212,9 +212,9 @@ async def auth_user_check_self_info(
 
 @router.post("/logout")
 async def logout(
-        response: Response,
-        current_user: UserSchema = Depends(get_current_user_from_refresh_token),
-        redis: Redis = Depends(get_redis),
+    response: Response,
+    current_user: UserSchema = Depends(get_current_user_from_refresh_token),
+    redis: Redis = Depends(get_redis),
 ) -> JSONResponse:
     """
     description: |
