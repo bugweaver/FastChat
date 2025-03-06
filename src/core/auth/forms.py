@@ -14,6 +14,7 @@ class CustomOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
         username (str): The username of the user.
         password (str): The user's password.
     """
+
     def __init__(
         self,
         username: str = Form(...),
