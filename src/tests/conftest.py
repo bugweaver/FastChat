@@ -40,9 +40,10 @@ app.dependency_overrides[get_redis] = override_get_redis
 
 
 @pytest.fixture
-def mock_redis() -> AsyncGenerator[MagicMock, None]:
-    with patch("core.auth.services.token_service.delete_refresh_token") as mock:
-        mock.return_value = None
+def mock_redis_client() -> Generator[AsyncMock, None, None]:
+    with patch(
+        "core.auth.services.token_service.delete_refresh_token", new_callable=AsyncMock
+    ) as mock:
         yield mock
 
 
