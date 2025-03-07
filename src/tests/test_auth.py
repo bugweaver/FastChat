@@ -86,7 +86,6 @@ async def test_refresh(async_client: AsyncClient, test_user: User):
 @pytest.mark.asyncio
 async def test_auth_user_check_self_info(async_client: AsyncClient, test_user: User):
     access_token = create_access_token(test_user)
-    async_client.cookies.set("access_token", access_token)
 
     with patch("core.auth.utils.token_utils.decode_jwt") as mock_decode:
         mock_decode.return_value = {"sub": test_user.username, "type": "access"}
