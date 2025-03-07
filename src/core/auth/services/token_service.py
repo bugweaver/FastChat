@@ -9,6 +9,7 @@ from core.auth.services.redis_service import (
 )
 from core.auth.utils.token_utils import encode_jwt
 from core.config import settings
+from core.models import User
 from core.schemas.user_schemas import UserSchema
 
 TOKEN_TYPE_FIELD = "type"
@@ -31,7 +32,7 @@ def create_jwt(
     )
 
 
-def create_access_token(user: UserSchema) -> str:
+def create_access_token(user: User | UserSchema) -> str:
     jwt_payload = {
         "sub": user.username,
     }
@@ -42,7 +43,7 @@ def create_access_token(user: UserSchema) -> str:
     )
 
 
-async def create_refresh_token(user: UserSchema, redis: Redis) -> str:
+async def create_refresh_token(user: User | UserSchema, redis: Redis) -> str:
     jwt_payload = {
         "sub": user.username,
     }
