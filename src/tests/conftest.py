@@ -36,7 +36,7 @@ async def override_get_redis() -> Redis:
     )
 
 
-app.dependency_overrides[get_redis] = override_get_redis
+app.dependency_overrides[get_redis] = override_get_redis  # type: ignore
 
 
 @pytest.fixture
