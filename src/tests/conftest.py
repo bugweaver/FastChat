@@ -57,7 +57,7 @@ async def create_test_database() -> AsyncGenerator[None, None]:
 
 
 @pytest.fixture(scope="session")
-async def test_app() -> FastAPI:
+async def test_app() -> AsyncGenerator[FastAPI, Any]:
     yield app
 
 
