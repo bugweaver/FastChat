@@ -27,7 +27,7 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-app.dependency_overrides[db_helper.session_getter] = override_get_async_session
+app.dependency_overrides[db_helper.session_getter] = override_get_async_session  # type: ignore
 
 
 async def override_get_redis() -> Redis:
