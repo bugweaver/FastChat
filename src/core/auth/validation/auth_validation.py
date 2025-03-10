@@ -56,6 +56,12 @@ def get_current_refresh_token_from_cookie(request: Request) -> str:
 def get_current_access_token_payload(request: Request) -> dict:
     """получение access токена"""
     token = request.cookies.get("access_token")
+
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
