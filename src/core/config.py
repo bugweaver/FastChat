@@ -58,6 +58,14 @@ class RedisConfig(BaseModel):
     )
 
 
+class CORSConfig(BaseModel):
+    allow_origins: list[str] = ["http://localhost:5173"]
+    allow_credentials: bool = True
+    allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    allow_headers: list[str] = ["*"]
+    expose_headers: list[str] = []
+
+
 class AuthJWT(BaseModel):
     private_key_path: Path = BASE_DIR / "certs" / "jwt-private.pem"
     public_key_path: Path = BASE_DIR / "certs" / "jwt-public.pem"
@@ -72,6 +80,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig = DatabaseConfig()
     redis: RedisConfig = RedisConfig()
     auth_jwt: AuthJWT = AuthJWT()
+    cors: CORSConfig = CORSConfig()
 
 
 settings = Settings()
