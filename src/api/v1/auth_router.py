@@ -107,19 +107,6 @@ async def login(
     refresh_token = await create_refresh_token(user, redis)
 
     response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=int(
-            timedelta(
-                minutes=settings.auth_jwt.access_token_expire_minutes
-            ).total_seconds()
-        ),
-    )
-
-    response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
@@ -165,14 +152,6 @@ async def refresh(
     token_data = {"access_token": new_access_token, "refresh_token": new_refresh_token}
     response = JSONResponse(content=token_data)
 
-    response.set_cookie(
-        key="access_token",
-        value=new_access_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=int(settings.auth_jwt.access_token_expire_minutes * 60),
-    )
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
@@ -220,7 +199,7 @@ async def logout(
     description: |
         **Log out a user by revoking their refresh token and clearing cookies.**
 
-        This endpoint removes both access and refresh tokens from cookies
+        This endpoint removes refresh token from cookies
         and revokes the user's current refresh token in Redis.
 
     ## Arguments:
@@ -236,14 +215,11 @@ async def logout(
     await revoke_refresh_token(current_user.id, redis)
 
     response.delete_cookie(
-        key="access_token", httponly=True, secure=False, samesite="lax"
-    )
-    response.delete_cookie(
         key="refresh_token", httponly=True, secure=False, samesite="lax"
     )
     return JSONResponse(
         content={
-            "detail": "Успешный выход",
+            "detail": "Successfully logged out",
             "status": "success",
             "user": current_user.username,
         },
