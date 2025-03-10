@@ -8,6 +8,7 @@ from fastapi.responses import ORJSONResponse
 from api import router as api_router
 from core.auth.services.redis_service import setup_redis_client
 from core.config import settings
+from core.middleware import setup_cors_middleware
 from core.models import db_helper
 
 
@@ -25,6 +26,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+setup_cors_middleware(app)
 app.include_router(api_router)
 
 if __name__ == "__main__":
