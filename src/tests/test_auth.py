@@ -49,8 +49,8 @@ async def test_login(
         response = await async_client.post("/api/v1/auth/login", data=login_data)
         assert response.status_code == expected_status
         if expected_status == 200:
-            assert "access_token" in response.cookies
-            assert "refresh_token" in response.cookies
+            assert "access_token" in response.json()
+            assert "refresh_token" in response.json()
 
 
 @pytest.mark.asyncio
@@ -79,8 +79,6 @@ async def test_refresh(async_client: AsyncClient, test_user: User):
         assert response.status_code == 200
         assert "access_token" in response.json()
         assert "refresh_token" in response.json()
-        assert "access_token" in response.cookies
-        assert "refresh_token" in response.cookies
 
 
 @pytest.mark.asyncio
@@ -115,7 +113,7 @@ async def test_logout(async_client: AsyncClient, test_user: User):
         response = await async_client.post("/api/v1/auth/logout")
 
         assert response.status_code == 200
-        assert "access_token" not in response.cookies
+        assert response.json().get("status") == "success"
         assert "refresh_token" not in response.cookies
 
 
