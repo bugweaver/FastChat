@@ -20,7 +20,6 @@ class CustomOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
         username: str = Form(...),
         password: str = Form(...),
     ) -> None:
-        # Убираем grant_type, scope, client_id и client_secret
         super().__init__(
             grant_type=None,
             username=username,

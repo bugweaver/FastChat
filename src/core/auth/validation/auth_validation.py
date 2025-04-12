@@ -1,203 +1,171 @@
+import logging
 from typing import Awaitable, Callable
 
-from fastapi import Depends, Form, HTTPException, Request, status
-from jwt import InvalidTokenError
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
-from core.auth.exceptions import CredentialsException, MissingUsernameError
-from core.auth.services.token_service import (
-    ACCESS_TOKEN_TYPE,
-    REFRESH_TOKEN_TYPE,
-    TOKEN_TYPE_FIELD,
-)
-from core.auth.utils.password_utils import validate_password
-from core.auth.utils.token_utils import decode_jwt
+from core.auth.dependencies import get_token_service
+from core.auth.services.token_service import TokenService
 from core.models import User, db_helper
-from core.schemas.user_schemas import UserSchema
-from repositories.user_repo import get_user_by_username
+from repositories.user_repo import get_user_by_token_sub, get_user_by_username
+
+logger = logging.getLogger(__name__)
 
 
 async def get_current_user_from_refresh_token(
     request: Request,
     db: AsyncSession = Depends(db_helper.session_getter),
+    token_service: TokenService = Depends(get_token_service),
 ) -> User:
-    token = get_current_refresh_token_from_cookie(request)
-
+    """
+    Gets a user based on a refresh token from a cookie.
+    Uses TokenService to retrieve and initially validate the payload.
+    """
     try:
-        payload = decode_jwt(token)
-        username: str = payload.get("sub")
-        if username is None:
-            raise MissingUsernameError()
-        token_type: str = payload.get("type")
-        if token_type != "refresh":
-            raise InvalidTokenError("Token type is invalid")
-    except (InvalidTokenError, MissingUsernameError) as e:
-        raise CredentialsException() from e
+        token_from_cookie = token_service.get_current_refresh_token_from_cookie(request)
+        logger.debug(
+            "get_current_user_from_refresh_token: token from cookie found: ...%s",
+            token_from_cookie[-10:] if token_from_cookie else "None",
+        )
+
+        payload = token_service.get_current_refresh_token_payload(request)
+        logger.debug("get_current_user_from_refresh_token: payload: %s", payload)
+
+        token_service.validate_token_type(payload, token_service.REFRESH_TOKEN_TYPE)
+        logger.debug("get_current_user_from_refresh_token: token type valid (refresh)")
+
+        username: str | None = payload.get("sub")
+        if not username:
+            logger.warning(
+                "get_current_user_from_refresh_token: 'sub' not found in payload"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials (missing sub)",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        logger.debug(
+            "get_current_user_from_refresh_token: username from 'sub': %s", username
+        )
+
+    except HTTPException as http_exc:
+        logger.warning(
+            "get_current_user_from_refresh_token:"
+            " HTTPException during token processing: %s - %s",
+            http_exc.status_code,
+            http_exc.detail,
+        )
+        raise http_exc
 
     user = await get_user_by_username(db, username)
     if not user:
-        raise CredentialsException(detail="Пользователь не найден")
-
-    return user
-
-
-def get_current_refresh_token_from_cookie(request: Request) -> str:
-    """получение refresh токена"""
-    token = request.cookies.get("refresh_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh Токен не найден в куки.",
+        logger.warning(
+            "get_current_user_from_refresh_token: User not found for username: %s",
+            username,
         )
-    return token
-
-
-def get_current_access_token_payload(request: Request) -> dict:
-    """получение access токена"""
-    token = request.cookies.get("access_token")
-
-    if not token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-
-    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access Токен не найден в куки.",
+            detail="Could not validate credentials (user not found)",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    try:
-        payload = decode_jwt(token=token)
-    except InvalidTokenError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Неверный токен: {e}",
-        ) from e
-
-    return payload
-
-
-def get_current_refresh_token_payload(request: Request) -> dict:
-    """получение refresh токена"""
-    token = request.cookies.get("refresh_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh Токен не найден в куки.",
-        )
-
-    try:
-        payload = decode_jwt(token=token)
-    except InvalidTokenError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Неверный токен: {e}",
-        ) from e
-
-    return payload
-
-
-def validate_token_type(payload: dict, token_type: str) -> bool:
-    """проверка на подходящий токен (используется в разных случаях)"""
-    current_token_type = payload.get(TOKEN_TYPE_FIELD)
-    if current_token_type == token_type:
-        return True
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=f"Неверный тип токена {current_token_type!r}, ожидается: {token_type!r}",
+    logger.debug(
+        "get_current_user_from_refresh_token: User found: %s (ID: %s)",
+        user.username,
+        user.id,
     )
+    return user
 
 
 def get_current_auth_user_from_access_token_of_type(
     token_type: str,
 ) -> Callable[..., Awaitable[User]]:
-    """проверка access токена"""
+    """Dependency factory for getting a user by Access token."""
 
     async def get_auth_user_from_token(
-        payload: dict = Depends(get_current_access_token_payload),
+        request: Request,
         db: AsyncSession = Depends(db_helper.session_getter),
+        token_service: TokenService = Depends(get_token_service),
     ) -> User:
-        validate_token_type(payload, token_type)
-        return await get_user_by_token_sub(payload, db)
+        logger.debug(
+            "get_auth_user_from_token: attempting to get payload for type %r",
+            token_type,
+        )
+        try:
+            payload = token_service.get_current_access_token_payload(request)
+            logger.debug("get_auth_user_from_token: got payload: %s", payload)
+
+            token_service.validate_token_type(payload, token_type)
+            logger.debug("get_auth_user_from_token: token type %r is valid", token_type)
+
+            user = await get_user_by_token_sub(payload, db)
+            if not user:
+                logger.warning(
+                    "get_auth_user_from_token: user not found for payload 'sub': %s",
+                    payload.get("sub"),
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials (user from token not found)",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            logger.debug(
+                "get_auth_user_from_token: user found: %s (ID: %s)",
+                user.username,
+                user.id,
+            )
+            return user
+
+        except HTTPException as http_exc:
+            logger.warning(
+                "get_auth_user_from_token: HTTPException: %s - %s",
+                http_exc.status_code,
+                http_exc.detail,
+            )
+            raise HTTPException(
+                status_code=http_exc.status_code,
+                detail=f"Invalid token ({http_exc.detail})",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from http_exc
+        except Exception as e:
+            logger.exception(
+                "get_auth_user_from_token: Unexpected error: %s", e, exc_info=True
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error during token validation",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from e
 
     return get_auth_user_from_token
 
 
-def get_current_auth_user_from_refresh_token_of_type(
-    token_type: str,
-) -> Callable[..., Awaitable[User]]:
-    """проверка refresh токена"""
+def get_token_types() -> tuple[str, str]:
+    return TokenService.ACCESS_TOKEN_TYPE, TokenService.REFRESH_TOKEN_TYPE
 
-    async def get_auth_user_from_token(payload: dict, db: AsyncSession) -> User:
-        validate_token_type(payload, token_type)
-        return await get_user_by_token_sub(payload, db)
 
-    return get_auth_user_from_token
-
+ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE = get_token_types()
 
 get_current_auth_user = get_current_auth_user_from_access_token_of_type(
     ACCESS_TOKEN_TYPE
 )
 
-get_current_auth_user_for_refresh = get_current_auth_user_from_refresh_token_of_type(
-    REFRESH_TOKEN_TYPE
-)
-
-
-async def get_user_by_token_sub(
-    payload: dict,
-    db: AsyncSession,
-) -> User:
-    """получение пользователя по access токену"""
-    username: str | None = payload.get("sub")
-    result = await db.execute(select(User).where(User.username == username))
-    user = result.scalars().first()
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный токен (пользователь не найден)",
-        )
-
-    return user
-
 
 async def get_current_active_auth_user(
     user: User = Depends(get_current_auth_user),
 ) -> User:
-    """получение авторизованного пользователя"""
+    """Getting an active authorized user using an Access token."""
+    logger.debug(
+        "get_current_active_auth_user: Checking activity for user: %s (Active: %s)",
+        user.username,
+        user.is_active,
+    )
     if user.is_active:
         return user
+    logger.warning(
+        "get_current_active_auth_user: User %s is not active.", user.username
+    )
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Пользователь неактивен",
+        detail="The user is inactive",
     )
-
-
-async def validate_auth_user_db(
-    username: str = Form(...),
-    password: str = Form(...),
-    db: AsyncSession = Depends(db_helper.session_getter),
-) -> UserSchema:
-    """валидация введенных пользователем данных (используется для входа)"""
-    unauthed_exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Неверный логин или пароль",
-    )
-
-    user = await get_user_by_username(db, username)
-
-    if not user:
-        raise unauthed_exc
-
-    if not validate_password(password, hashed_password=user.password.encode("utf-8")):
-        raise unauthed_exc
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Пользователь неактивен",
-        )
-
-    return UserSchema(**user.__dict__)

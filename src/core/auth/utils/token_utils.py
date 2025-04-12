@@ -3,16 +3,18 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
+from repositories.user_repo import get_user_by_username
 
 
 def encode_jwt(
     payload: dict,
     private_key: str = settings.auth_jwt.private_key_path.read_text(),
     algorithm: str = settings.auth_jwt.algorithm,
+    expire_minutes: int | None = None,
     expire_timedelta: timedelta | None = None,
-    expire_minutes: int = settings.auth_jwt.access_token_expire_minutes,
 ) -> str:
     to_encode = payload.copy()
     now = datetime.now(timezone.utc)
@@ -32,14 +34,13 @@ def decode_jwt(
     return jwt.decode(token, public_key, algorithms=[algorithm])
 
 
-# def decode_jwt_ws(
-#     token: str,
-#     public_key: str = settings.auth_jwt.public_key_path.read_text(),
-#     algorithm: str = settings.auth_jwt.algorithm,
-# ):
-#     try:
-#         return jwt.decode(token, public_key, algorithms=[algorithm])
-#     except jwt.ExpiredSignatureError:
-#         raise ValueError("Токен просрочен")
-#     except jwt.JWTError:
-#         raise ValueError("Невалидный токен")
+async def verify_token_ws(token: str, db: AsyncSession) -> int | None:
+    try:
+        payload = decode_jwt(token)
+        username = payload.get("sub")
+        if not username:
+            return None
+        user = await get_user_by_username(db, username)
+        return user.id if user else None
+    except Exception:
+        return None
