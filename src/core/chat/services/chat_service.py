@@ -116,7 +116,7 @@ class ChatService:
             chats_data: list[
                 tuple[Chat, Message | None, User | None]
             ] = await chat_repo.get_user_chats_data(db, user_id)
-            online_users_ids_str = await get_online_users(redis)
+            online_users_ids = await get_online_users(redis)
         except Exception as e:
             log.error(
                 "Failed to fetch initial data for get_user_chats user %s: %s",
@@ -167,7 +167,7 @@ class ChatService:
                 elif partner_user_orm:
                     chat_name = partner_user_orm.username
                     chat_avatar = getattr(partner_user_orm, "avatar", None)
-                    is_online = str(partner_user_orm.id) in online_users_ids_str
+                    is_online = partner_user_orm.id in online_users_ids
                 else:
                     log.warning(
                         "Private chat %s fetched without a partner user for user %s.",
