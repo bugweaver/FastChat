@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.auth.dependencies import get_verified_ws_user_id, require_specific_user
 from core.dependencies import get_redis_client
 from core.models import db_helper
-
 from core.websockets.connection_manager import ConnectionManager
 from core.websockets.services.websocket_service import WebSocketService
 
