@@ -39,6 +39,9 @@ class LoggingConfig(BaseModel):
 class ApiV1Prefix(BaseModel):
     prefix: str = "/v1"
     auth: str = "/auth"
+    users: str = "/users"
+    ws: str = "/ws"
+    chat: str = "/chats"
 
 
 class ApiPrefix(BaseModel):
@@ -82,7 +85,7 @@ class RedisConfig(BaseModel):
 class CORSConfig(BaseModel):
     allow_origins: list[str] = ["http://localhost:5173"]
     allow_credentials: bool = True
-    allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    allow_methods: list[str] = ["*"]
     allow_headers: list[str] = ["*"]
     expose_headers: list[str] = []
 
