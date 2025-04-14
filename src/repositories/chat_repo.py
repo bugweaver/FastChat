@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import desc, func, select, exists
+from sqlalchemy import desc, exists, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import (
