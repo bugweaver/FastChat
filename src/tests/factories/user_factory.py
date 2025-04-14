@@ -1,5 +1,3 @@
-from typing import Any
-
 import factory
 
 from core.auth.utils.password_utils import hash_password
@@ -25,7 +23,7 @@ class UserFactory(AsyncSQLAlchemyModelFactory):
     is_active = True
 
     @classmethod
-    async def build_async(cls, **kwargs: dict[str, Any]) -> User:
+    async def build_async(cls, **kwargs) -> User:
         """Creates a User instance with dynamic keyword arguments."""
         return cls._meta.model(**kwargs)
 
