@@ -302,7 +302,7 @@ class TestChatService:
             (mock_c2, None, mock_p2),
             (mock_c3, None, mock_p3),
         ]
-        mock_online_set = {str(mock_p3.id)}
+        mock_online_set = {mock_p3.id}
 
         with (
             patch(
