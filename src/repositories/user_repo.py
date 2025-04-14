@@ -2,8 +2,10 @@ from typing import Sequence
 
 from fastapi import HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth.utils.password_utils import hash_password
 from core.models import User
 from core.schemas.user_schemas import UserCreate, UserUpdate
 
@@ -18,6 +20,17 @@ async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     query = select(User).where(User.username == username)
     result = await db.execute(query)
     return result.scalars().first()
+
+
+async def get_users_by_username(
+    db: AsyncSession, username: str
+) -> Sequence[User] | None:
+    """
+    Search for users by username (including partial matches).
+    """
+    query = select(User).where(User.username.ilike(f"%{username}%"))
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
