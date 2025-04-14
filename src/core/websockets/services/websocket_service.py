@@ -8,7 +8,6 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.websockets import WebSocketDisconnect
 
-from core.chat.helpers import check_user_in_chat
 from core.chat.services.message_service import MessageService
 from core.chat.services.redis_service import (
     get_online_users,
@@ -29,7 +28,7 @@ from core.schemas.ws_schemas import (
     parse_ws_message,
 )
 from core.websockets.connection_manager import ConnectionManager
-from repositories.chat_repo import get_chat_by_id
+from repositories.chat_repo import get_chat_by_id, check_user_in_chat
 from repositories.user_repo import get_users_by_username
 
 log = logging.getLogger(__name__)
