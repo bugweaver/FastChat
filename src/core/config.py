@@ -95,6 +95,14 @@ class AuthJWT(BaseModel):
     refresh_token_expire_days: int = 30
 
 
+class CookieSettings(BaseModel):
+    access_token_key: str = "access_token"
+    refresh_token_key: str = "refresh_token"
+    httponly: bool = True
+    secure: bool = False
+    samesite: str = "lax"
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     logging: LoggingConfig = LoggingConfig()
@@ -102,6 +110,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig = DatabaseConfig()
     redis: RedisConfig = RedisConfig()
     auth_jwt: AuthJWT = AuthJWT()
+    cookie: CookieSettings = CookieSettings()
     cors: CORSConfig = CORSConfig()
 
 
