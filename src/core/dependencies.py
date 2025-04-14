@@ -1,13 +1,12 @@
-from fastapi import Request
-from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
-
-from core.config import settings
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.api.prefix}{settings.api.v1.prefix}{settings.api.v1.auth}/login"
-)
+from starlette.requests import Request
 
 
-def get_redis(request: Request) -> Redis:
+def get_redis_client(request: Request) -> Redis:
+    """Returns the Redis client from the application state (for HTTP or WebSocket)."""
+    if (
+        not hasattr(request.app.state, "redis_client")
+        or request.app.state.redis_client is None
+    ):
+        raise RuntimeError("Redis client not available in application state.")
     return request.app.state.redis_client
