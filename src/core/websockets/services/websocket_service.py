@@ -28,7 +28,7 @@ from core.schemas.ws_schemas import (
     parse_ws_message,
 )
 from core.websockets.connection_manager import ConnectionManager
-from repositories.chat_repo import get_chat_by_id, check_user_in_chat
+from repositories.chat_repo import check_user_in_chat, get_chat_by_id
 from repositories.user_repo import get_users_by_username
 
 log = logging.getLogger(__name__)

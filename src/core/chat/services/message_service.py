@@ -7,8 +7,6 @@ from fastapi import HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from repositories.chat_repo import check_user_in_chat
-
 from core.chat.services.redis_service import (
     add_message_to_chat_history,
     delete_message_from_redis,
@@ -27,6 +25,7 @@ from core.schemas.redis_schemas import (
     RedisMessageFilter,
 )
 from repositories import chat_repo
+from repositories.chat_repo import check_user_in_chat
 
 DEFAULT_CHAT_SETTINGS = RedisChatSettings()
 log = logging.getLogger(__name__)

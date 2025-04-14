@@ -4,8 +4,6 @@ from fastapi import HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from repositories.chat_repo import check_user_in_chat
-
 from core.chat.services.redis_service import get_online_users, is_user_online
 from core.models import Chat, Message, User
 from core.schemas.chat_schemas import (
@@ -18,6 +16,7 @@ from core.schemas.chat_schemas import (
     UserChatsResponse,
 )
 from repositories import chat_repo, user_repo
+from repositories.chat_repo import check_user_in_chat
 
 log = logging.getLogger(__name__)
 
