@@ -1,27 +1,18 @@
-from contextlib import asynccontextmanager
-from typing import AsyncIterator
+import logging
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
 from api import router as api_router
-from core.auth.services.redis_service import setup_redis_client
 from core.config import settings
+from core.lifecycle import lifespan
 from core.middleware import setup_cors_middleware
-from core.models import db_helper
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # startapp
-    app.state.redis_client = await setup_redis_client()
-    yield
-    # shutdown
-    await db_helper.dispose()
-    await app.state.redis_client.close()
-
-
+logging.basicConfig(
+    level=settings.logging.log_level_value,
+    format=settings.logging.log_format,
+)
 app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
