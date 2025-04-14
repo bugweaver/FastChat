@@ -40,6 +40,20 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalars().first()
 
 
+async def get_user_by_token_sub(payload: dict, db: AsyncSession) -> User:
+    """Getting user by subject from token"""
+    username: str | None = payload.get("sub")
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalars().first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный токен (пользователь не найден)",
+        )
+
+    return user
+
+
 async def get_users(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> Sequence[User]:
