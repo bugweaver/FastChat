@@ -36,13 +36,27 @@ async def get_users(
     return result.scalars().all()
 
 
-async def create_user(db: AsyncSession, user_create: UserCreate) -> User | None:
-    """Create new user."""
-    db_user = User(**user_create.model_dump())
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+async def create_user(db: AsyncSession, user_create: UserCreate) -> User:
+    """Create new user with password hashing."""
+    try:
+        hashed_password = hash_password(user_create.password)
+
+        db_user = User(
+            email=str(user_create.email),
+            username=user_create.username,
+            password=hashed_password.decode("utf-8"),
+            first_name=user_create.first_name,
+            last_name=user_create.last_name,
+        )
+
+        db.add(db_user)
+        await db.commit()
+        await db.refresh(db_user)
+        return db_user
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}") from e
 
 
 async def update_user(
